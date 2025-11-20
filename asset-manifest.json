@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/meteo-maroc/static/css/main.ff42a4e1.css",
+    "main.js": "/meteo-maroc/static/js/main.667adb9e.js",
+    "index.html": "/meteo-maroc/index.html",
+    "main.ff42a4e1.css.map": "/meteo-maroc/static/css/main.ff42a4e1.css.map",
+    "main.667adb9e.js.map": "/meteo-maroc/static/js/main.667adb9e.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.ff42a4e1.css",
+    "static/js/main.667adb9e.js"
+  ]
+}
