@@ -20,6 +20,7 @@ export default function MeteoMaroc() {
   const [weatherStats, setWeatherStats] = useState({});
   const [weatherAdvice, setWeatherAdvice] = useState([]);
 
+  // Fonction pour récupérer la météo actuelle
   const fetchWeather = async (city) => {
     try {
       const response = await fetch(
@@ -60,221 +61,7 @@ export default function MeteoMaroc() {
     }
   };
 
-  // 1. Localisation Automatique
-  const getUserLocation = () => {
-    setLocationLoading(true);
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          try {
-            const { latitude, longitude } = position.coords;
-            const response = await fetch(
-              `https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=${API_KEY}`
-            );
-            const data = await response.json();
-            if (data.length > 0) {
-              const cityName = data[0].name;
-              setUserLocation(cityName);
-              handleCityClick(cityName);
-            }
-          } catch (error) {
-            console.error("Erreur géolocalisation:", error);
-            alert("Impossible de déterminer votre position");
-          } finally {
-            setLocationLoading(false);
-          }
-        },
-        (error) => {
-          console.error("Erreur géolocalisation:", error);
-          alert("Veuillez autoriser la géolocalisation pour cette fonctionnalité");
-          setLocationLoading(false);
-        }
-      );
-    } else {
-      alert("La géolocalisation n'est pas supportée par votre navigateur");
-      setLocationLoading(false);
-    }
-  };
-
-  // 7. Statistiques Météo
-  const generateWeatherStats = (city, weatherData) => {
-    // Statistiques basées sur la ville et les données actuelles
-    const cityStats = {
-      "Casablanca": { heatRecord: "42°C", coldRecord: "-2°C", sunshine: "7h/jour", rainfall: "400mm/an" },
-      "Marrakech": { heatRecord: "49°C", coldRecord: "-3°C", sunshine: "8.5h/jour", rainfall: "240mm/an" },
-      "Rabat": { heatRecord: "40°C", coldRecord: "-1°C", sunshine: "7.5h/jour", rainfall: "550mm/an" },
-      "Fès": { heatRecord: "45°C", coldRecord: "-4°C", sunshine: "8h/jour", rainfall: "500mm/an" },
-      "Tanger": { heatRecord: "38°C", coldRecord: "0°C", sunshine: "7h/jour", rainfall: "800mm/an" },
-      "Agadir": { heatRecord: "41°C", coldRecord: "2°C", sunshine: "8h/jour", rainfall: "250mm/an" },
-    };
-
-    const defaultStats = { heatRecord: "40°C", coldRecord: "0°C", sunshine: "7h/jour", rainfall: "400mm/an" };
-    
-    const stats = cityStats[city] || defaultStats;
-
-    setWeatherStats({
-      records: [
-        { label: "Record chaleur", value: stats.heatRecord, icon: "🔥", current: weatherData.temperature },
-        { label: "Record froid", value: stats.coldRecord, icon: "❄️", current: weatherData.temperature },
-        { label: "Ensoleillement moyen", value: stats.sunshine, icon: "☀️" },
-        { label: "Pluviométrie annuelle", value: stats.rainfall, icon: "💧" }
-      ],
-      current: [
-        { label: "Température actuelle", value: `${weatherData.temperature}°C`, icon: "🌡️" },
-        { label: "Ressenti", value: `${weatherData.feels_like}°C`, icon: "🤗" },
-        { label: "Humidité", value: `${weatherData.humidity}%`, icon: "💦" },
-        { label: "Vitesse vent", value: `${weatherData.wind} m/s`, icon: "💨" }
-      ]
-    });
-  };
-
-  // 8. Conseils Personnalisés
-  const generateWeatherAdvice = (weatherData) => {
-    const advice = [];
-    
-    if (weatherData.temperature > 30) {
-      advice.push({
-        icon: "💧",
-        text: "Hydratez-vous régulièrement",
-        type: "heat"
-      });
-      advice.push({
-        icon: "☀️",
-        text: "Évitez le soleil entre 12h et 16h",
-        type: "heat"
-      });
-      advice.push({
-        icon: "👒",
-        text: "Portez un chapeau et des vêtements légers",
-        type: "heat"
-      });
-    }
-    
-    if (weatherData.temperature < 10) {
-      advice.push({
-        icon: "🧥",
-        text: "Habillez-vous chaudement en plusieurs couches",
-        type: "cold"
-      });
-      advice.push({
-        icon: "🍵",
-        text: "Buvez des boissons chaudes",
-        type: "cold"
-      });
-      advice.push({
-        icon: "🏠",
-        text: "Maintenez votre logement à 19°C",
-        type: "cold"
-      });
-    }
-    
-    if (weatherData.description.includes('pluie') || weatherData.description.includes('pluvieux')) {
-      advice.push({
-        icon: "🌂",
-        text: "Prenez un parapluie ou un imperméable",
-        type: "rain"
-      });
-      advice.push({
-        icon: "🚗",
-        text: "Conduisez prudemment sur route mouillée",
-        type: "rain"
-      });
-      advice.push({
-        icon: "👟",
-        text: "Chaussures imperméables recommandées",
-        type: "rain"
-      });
-    }
-    
-    if (weatherData.wind > 8) {
-      advice.push({
-        icon: "💨",
-        text: "Attention aux rafales de vent",
-        type: "wind"
-      });
-      advice.push({
-        icon: "🌳",
-        text: "Évitez les zones boisées",
-        type: "wind"
-      });
-    }
-
-    if (weatherData.humidity > 70) {
-      advice.push({
-        icon: "🌫️",
-        text: "Humidité élevée - aérez votre logement",
-        type: "humidity"
-      });
-    }
-
-    if (weatherData.visibility < 5) {
-      advice.push({
-        icon: "🚘",
-        text: "Visibilité réduite - allumez vos feux",
-        type: "visibility"
-      });
-    }
-
-    // Conseils généraux basés sur l'heure
-    const hour = new Date().getHours();
-    if (hour >= 6 && hour <= 10) {
-      advice.push({
-        icon: "🌅",
-        text: "Bon début de journée ! Vérifiez la météo pour planifier vos activités",
-        type: "morning"
-      });
-    } else if (hour >= 18 && hour <= 22) {
-      advice.push({
-        icon: "🌇",
-        text: "Bonne soirée ! Pensez à consulter les prévisions pour demain",
-        type: "evening"
-      });
-    }
-
-    setWeatherAdvice(advice);
-  };
-
-  // 9. Mode Sombre/Automatique
-  useEffect(() => {
-    const updateTheme = () => {
-      if (theme === 'auto') {
-        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-      } else {
-        document.documentElement.setAttribute('data-theme', theme);
-      }
-    };
-
-    updateTheme();
-
-    // Écouter les changements de préférence système
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    mediaQuery.addEventListener('change', updateTheme);
-
-    return () => mediaQuery.removeEventListener('change', updateTheme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme(current => {
-      if (current === 'auto') return 'light';
-      if (current === 'light') return 'dark';
-      return 'auto';
-    });
-  };
-
-  const getThemeIcon = () => {
-    if (theme === 'auto') return '⚡';
-    if (theme === 'light') return '☀️';
-    return '🌙';
-  };
-
-  const getThemeText = () => {
-    if (theme === 'auto') return 'Auto';
-    if (theme === 'light') return 'Clair';
-    return 'Sombre';
-  };
-
-  // Reste du code existant...
+  // Fonction pour récupérer les prévisions
   const fetchForecast = async (city) => {
     try {
       const response = await fetch(
@@ -360,6 +147,182 @@ export default function MeteoMaroc() {
     }
   };
 
+  // 1. Localisation Automatique - CORRIGÉ
+  const getUserLocation = () => {
+    setLocationLoading(true);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          try {
+            const { latitude, longitude } = position.coords;
+            const response = await fetch(
+              `https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=${API_KEY}`
+            );
+            const data = await response.json();
+            if (data.length > 0) {
+              const cityName = data[0].name;
+              setUserLocation(cityName);
+              handleCityClick(cityName);
+            }
+          } catch (error) {
+            console.error("Erreur géolocalisation:", error);
+            alert("Impossible de déterminer votre position");
+          } finally {
+            setLocationLoading(false);
+          }
+        },
+        (error) => {
+          console.error("Erreur géolocalisation:", error);
+          alert("Veuillez autoriser la géolocalisation pour cette fonctionnalité");
+          setLocationLoading(false);
+        }
+      );
+    } else {
+      alert("La géolocalisation n'est pas supportée par votre navigateur");
+      setLocationLoading(false);
+    }
+  };
+
+  // 7. Statistiques Météo
+  const generateWeatherStats = (city, weatherData) => {
+    const cityStats = {
+      "Casablanca": { heatRecord: "42°C", coldRecord: "-2°C", sunshine: "7h/jour", rainfall: "400mm/an" },
+      "Marrakech": { heatRecord: "49°C", coldRecord: "-3°C", sunshine: "8.5h/jour", rainfall: "240mm/an" },
+      "Rabat": { heatRecord: "40°C", coldRecord: "-1°C", sunshine: "7.5h/jour", rainfall: "550mm/an" },
+      "Fès": { heatRecord: "45°C", coldRecord: "-4°C", sunshine: "8h/jour", rainfall: "500mm/an" },
+      "Tanger": { heatRecord: "38°C", coldRecord: "0°C", sunshine: "7h/jour", rainfall: "800mm/an" },
+      "Agadir": { heatRecord: "41°C", coldRecord: "2°C", sunshine: "8h/jour", rainfall: "250mm/an" },
+    };
+
+    const defaultStats = { heatRecord: "40°C", coldRecord: "0°C", sunshine: "7h/jour", rainfall: "400mm/an" };
+    
+    const stats = cityStats[city] || defaultStats;
+
+    setWeatherStats({
+      records: [
+        { label: "Record chaleur", value: stats.heatRecord, icon: "🔥", current: weatherData.temperature },
+        { label: "Record froid", value: stats.coldRecord, icon: "❄️", current: weatherData.temperature },
+        { label: "Ensoleillement moyen", value: stats.sunshine, icon: "☀️" },
+        { label: "Pluviométrie annuelle", value: stats.rainfall, icon: "💧" }
+      ],
+      current: [
+        { label: "Température actuelle", value: `${weatherData.temperature}°C`, icon: "🌡️" },
+        { label: "Ressenti", value: `${weatherData.feels_like}°C`, icon: "🤗" },
+        { label: "Humidité", value: `${weatherData.humidity}%`, icon: "💦" },
+        { label: "Vitesse vent", value: `${weatherData.wind} m/s`, icon: "💨" }
+      ]
+    });
+  };
+
+  // 8. Conseils Personnalisés
+  const generateWeatherAdvice = (weatherData) => {
+    const advice = [];
+    
+    if (weatherData.temperature > 30) {
+      advice.push({
+        icon: "💧",
+        text: "Hydratez-vous régulièrement",
+        type: "heat"
+      });
+      advice.push({
+        icon: "☀️",
+        text: "Évitez le soleil entre 12h et 16h",
+        type: "heat"
+      });
+    }
+    
+    if (weatherData.temperature < 10) {
+      advice.push({
+        icon: "🧥",
+        text: "Habillez-vous chaudement en plusieurs couches",
+        type: "cold"
+      });
+      advice.push({
+        icon: "🍵",
+        text: "Buvez des boissons chaudes",
+        type: "cold"
+      });
+    }
+    
+    if (weatherData.description.includes('pluie') || weatherData.description.includes('pluvieux')) {
+      advice.push({
+        icon: "🌂",
+        text: "Prenez un parapluie ou un imperméable",
+        type: "rain"
+      });
+    }
+    
+    if (weatherData.wind > 8) {
+      advice.push({
+        icon: "💨",
+        text: "Attention aux rafales de vent",
+        type: "wind"
+      });
+    }
+
+    if (weatherData.humidity > 70) {
+      advice.push({
+        icon: "🌫️",
+        text: "Humidité élevée - aérez votre logement",
+        type: "humidity"
+      });
+    }
+
+    // Conseils généraux basés sur l'heure
+    const hour = new Date().getHours();
+    if (hour >= 6 && hour <= 10) {
+      advice.push({
+        icon: "🌅",
+        text: "Bon début de journée ! Vérifiez la météo pour planifier vos activités",
+        type: "morning"
+      });
+    }
+
+    setWeatherAdvice(advice);
+  };
+
+  // 9. Mode Sombre/Automatique - CORRIGÉ
+  useEffect(() => {
+    const updateTheme = () => {
+      if (theme === 'auto') {
+        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      } else {
+        document.documentElement.setAttribute('data-theme', theme);
+      }
+    };
+
+    updateTheme();
+
+    // Écouter les changements de préférence système
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = () => updateTheme();
+    mediaQuery.addEventListener('change', handleChange);
+
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(current => {
+      if (current === 'auto') return 'light';
+      if (current === 'light') return 'dark';
+      return 'auto';
+    });
+  };
+
+  const getThemeIcon = () => {
+    if (theme === 'auto') return '⚡';
+    if (theme === 'light') return '☀️';
+    return '🌙';
+  };
+
+  const getThemeText = () => {
+    if (theme === 'auto') return 'Auto';
+    if (theme === 'light') return 'Clair';
+    return 'Sombre';
+  };
+
+  // Fonctions mock pour le développement
   const getMockWeather = (city) => ({
     temperature: Math.floor(Math.random() * 35) + 10,
     description: ["Ensoleillé", "Nuageux", "Pluvieux", "Partiellement nuageux"][Math.floor(Math.random() * 4)],
@@ -397,21 +360,51 @@ export default function MeteoMaroc() {
     return forecasts;
   };
 
+  // Gestion du clic sur une ville - CORRIGÉ
   const handleCityClick = async (city) => {
     setSelectedCity(city);
     setLoading(true);
     setActiveView("current");
     
-    const [weather, forecast] = await Promise.all([
-      fetchWeather(city),
-      fetchForecast(city)
-    ]);
-    
-    setDetailedWeather({ name: city, ...weather });
-    setForecastData(forecast);
-    setLoading(false);
+    try {
+      const [weather, forecast] = await Promise.all([
+        fetchWeather(city),
+        fetchForecast(city)
+      ]);
+      
+      setDetailedWeather({ name: city, ...weather });
+      setForecastData(forecast);
+    } catch (error) {
+      console.error("Erreur lors du chargement:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // Chargement des données météo pour les villes filtrées - CORRIGÉ
+  useEffect(() => {
+    const loadWeatherData = async () => {
+      if (filtered.length === 0) return;
+      setLoading(true);
+      const newWeatherData = {};
+      
+      try {
+        for (const city of filtered) {
+          const weather = await fetchWeather(city);
+          newWeatherData[city] = weather;
+        }
+        setWeatherData(newWeatherData);
+      } catch (error) {
+        console.error("Erreur lors du chargement des données:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadWeatherData();
+  }, [filtered]);
+
+  // Filtrage des villes - CORRIGÉ
   useEffect(() => {
     const filterCities = () => {
       if (search.trim() === "") {
@@ -426,21 +419,6 @@ export default function MeteoMaroc() {
     filterCities();
   }, [search]);
 
-  useEffect(() => {
-    const loadWeatherData = async () => {
-      if (filtered.length === 0) return;
-      setLoading(true);
-      const newWeatherData = {};
-      for (const city of filtered) {
-        const weather = await fetchWeather(city);
-        newWeatherData[city] = weather;
-      }
-      setWeatherData(newWeatherData);
-      setLoading(false);
-    };
-    loadWeatherData();
-  }, [filtered]);
-
   const closeDetails = () => {
     setSelectedCity(null);
     setDetailedWeather(null);
@@ -448,7 +426,7 @@ export default function MeteoMaroc() {
   };
 
   // Informations personnelles pour le footer
-  const personalInfo = {
+ const personalInfo = {
     nom: "ilyass chnafa",
     titre: "Développeur Full Stack & Expert Digital",
     email: "ilyassmino1@gmail.com",
@@ -555,7 +533,7 @@ export default function MeteoMaroc() {
         </section>
       </main>
 
-      {/* Modal Météo avec nouvelles sections */}
+      {/* Modal Météo */}
       {selectedCity && detailedWeather && (
         <div className="modal-overlay" onClick={closeDetails}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -790,9 +768,7 @@ export default function MeteoMaroc() {
                 <a href={personalInfo.reseaux.github} target="_blank" rel="noopener noreferrer">
                   🐙 GitHub
                 </a>
-                <a href={personalInfo.reseaux.portfolio} target="_blank" rel="noopener noreferrer">
-                  🌐 Portfolio
-                </a>
+               
               </div>
             </div>
           </div>
